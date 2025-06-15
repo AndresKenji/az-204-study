@@ -437,7 +437,7 @@ az storage account update \
 5. Instrumentar métricas y logs, escribir consultas Kusto en Log Analytics.
 
 # Azure Cosmos DB
-Una base de datos multi-modelo y globally distributed de Azure con latencias de milisegundos de un solo dígito y SLAs para disponibilidad, rendimiento, consistencia y latencia.
+Una base de datos multi-modelo y distribuida globalmente de Azure con latencias de milisegundos de un solo dígito y SLAs para disponibilidad, rendimiento, consistencia y latencia.
 
 ## Modelos de API soportados
 
