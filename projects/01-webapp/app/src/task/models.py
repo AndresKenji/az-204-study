@@ -1,13 +1,15 @@
-from pydantic import BaseModel
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
+from src.database import Base
 
-class TaskCreate(BaseModel):
-    title: str
-    done: bool = False
+class Task(Base):
+    __tablename__ = "task"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255),nullable=False )
+    done = Column(Boolean, default=False, nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id"))  
 
-class TaskOut(BaseModel):
-    id: int
-    title: str
-    done: bool
+    user = relationship("User", back_populates="tasks")  
 
-    class Config:
-        from_attributes = True
+
+

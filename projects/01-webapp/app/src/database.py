@@ -1,5 +1,5 @@
 import os
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import NullPool
 from sqlalchemy import create_engine
 
@@ -24,7 +24,8 @@ class Database:
     @property
     def conn(self):
         return self.engine.connect()
-
+    
+Base = declarative_base()
 azdb = Database(DB_CONNECTION)
 
 

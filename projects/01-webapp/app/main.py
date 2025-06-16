@@ -3,6 +3,7 @@ from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from src.task.router import router as task_router
 from src.auth.router import router as auth_router
+from src.database import Base, azdb
 import uvicorn
 
 
@@ -25,6 +26,8 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(task_router)
 
+
+Base.metadata.create_all(bind=azdb.engine)
 
 if __name__ == '__main__':
     uvicorn.run('main:app', host='0.0.0.0', port=8000)

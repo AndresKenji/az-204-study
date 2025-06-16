@@ -1,0 +1,5 @@
+$env:SECRET_KEY="hash_key_32bit"
+$env:ALGORITHM="SHA256"
+$env:ACCESS_TOKEN_EXPIRE_MINUTES=30
+$env:db_connection="sqlite:///task_db.db"
+$env:admin_pwd="your_admin_password"
