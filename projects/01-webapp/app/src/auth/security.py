@@ -4,7 +4,7 @@ from typing import Annotated
 import jwt
 from jwt.exceptions import InvalidTokenError
 from datetime import datetime, timedelta, timezone
-from fastapi import HTTPException, Depends, status
+from fastapi import HTTPException, Depends, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from src.auth.models import User as db_user
@@ -88,6 +88,21 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     if user is None:
         raise credentials_exception
     return user
+
+async def get_current_user_from_cookie(request: Request):
+    try:
+        token = request.cookies.get("access_token")
+        if token is None:
+            return None
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        user_id: int = payload.get("id")
+        if username is None or user_id is None:
+            logout(request)
+        user = get_user(azdb, username=username)
+        return user
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="error getting user")
 
 async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)],):
     if current_user.disabled:

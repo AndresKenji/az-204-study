@@ -1,0 +1,39 @@
+{% include 'layout.html' %}
+
+<div class="container">
+    <div class="card" >
+        <h5 class="card-header">Register</h5>
+        <div class="card-body">
+            {% if msg %}
+            <div class="alert alert-danger"> {{msg}} </div>
+            {% endif %}
+            <form method="POST" action="/auth/register">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Username" aria-label="Username">
+                    <span class="input-group-text">@</span>
+                    <input type="text" class="form-control" placeholder="FullName" aria-label="FullName">
+                </div>
+                <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="inputPassword6" class="col-form-label">Password</label>
+                </div>
+                <div class="col-auto">
+                    <input type="password" id="inputPassword6" class="form-control" aria-describedby="passwordHelpInline">
+                </div>
+                <div class="col-auto">
+                    <span id="passwordHelpInline" class="form-text">
+                    Must be 8-20 characters long.
+                    </span>
+                </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card’s content.</p>
+        <a href="#" class="card-link">Card link</a>
+        <a href="#" class="card-link">Another link</a>
+      </div>
+      <div class="card-footer text-muted">
+        <a href="/auth">Already have an account?</a>
+      </div>
+    </div>
+</div>

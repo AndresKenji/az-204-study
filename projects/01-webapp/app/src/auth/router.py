@@ -1,7 +1,9 @@
-from typing import Annotated,List
+from typing import Annotated, List, Optional
 from datetime import timedelta, datetime
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from src.auth.schemas import Token, User, UserShow, CreateUser
 from src.auth.models import User as db_user
@@ -12,10 +14,23 @@ from src.auth.security import (
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES,
     get_current_active_user,
+    get_current_user_from_cookie,
     check_admin
     )
 from src.auth.dependencies import check_admin_user
 
+class LoginForm:
+    def __init__(self, request: Request):
+        self.request:Request = request
+        self.username: Optional[str]
+        self.password: Optional[str]
+
+    async def create_oauth_form(self):
+        form = await self.request.form()
+        self.username = form.get("username")
+        self.password = form.get("password")
+
+templates = Jinja2Templates(directory="templates")
 
 router = APIRouter(
     prefix="/auth",
@@ -36,6 +51,46 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
+
+@router.post("/token-cookie")
+async def login_for_access_token_cookie(response: Response,form_data: OAuth2PasswordRequestForm= Depends()):
+    user = authenticate_user(azdb, form_data.username, form_data.password)
+    if not user:
+        return False
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username, "id": user.id}, expires_delta=access_token_expires
+    )
+
+    response.set_cookie(key='access_token', value=access_token, httponly=True)
+
+    return True
+
+# endpoints para el login por html
+@router.get("/", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"request":request}
+    )
+
+@router.post("/", response_class=HTMLResponse)
+async def login(request: Request, db: Session = Depends(azdb.get_db)):
+    form = LoginForm(request)
+    await form.create_oauth_form()
+    response = RedirectResponse(url="/tasks", status_code=status.HTTP_302_FOUND)
+
+    validate_user_cookie = await login_for_access_token_cookie(response= response, form_data=form)
+
+    if not validate_user_cookie:
+        msg = "Incorrect Username or Password"
+        return templates.TemplateResponse(
+            name="login.html",
+            request=request,
+            context={"request":request, "msg":msg}
+        )
+    return response
 
 
 @router.get("/users/me/", response_model=UserShow)
