@@ -23,9 +23,7 @@ router = APIRouter(
 )
 
 @router.post("/token")
-async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-) -> Token:
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],) -> Token:
     user = authenticate_user(azdb, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
