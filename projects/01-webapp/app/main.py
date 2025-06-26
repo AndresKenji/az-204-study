@@ -1,6 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from src.task.router import router as task_router
 from src.auth.router import router as auth_router
 from src.database import Base, azdb
@@ -26,6 +29,15 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(task_router)
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="home.html",
+        context= {"r":request}
+        )
 
 Base.metadata.create_all(bind=azdb.engine)
 
