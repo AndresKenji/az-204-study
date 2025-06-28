@@ -56,6 +56,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
 async def login_for_access_token_cookie(response: Response,form_data: OAuth2PasswordRequestForm= Depends()):
     user = authenticate_user(azdb, form_data.username, form_data.password)
     if not user:
+        print(f"No se encontro el usuario {form_data.username} en la base de datos")
         return False
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -76,7 +77,7 @@ async def login_page(request: Request):
     )
 
 @router.post("/", response_class=HTMLResponse)
-async def login(request: Request, db: Session = Depends(azdb.get_db)):
+async def login(request: Request):
     form = LoginForm(request)
     await form.create_oauth_form()
     response = RedirectResponse(url="/tasks", status_code=status.HTTP_302_FOUND)

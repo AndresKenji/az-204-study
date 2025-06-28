@@ -1,8 +1,14 @@
-{% include 'layout.html' %}
+{% extends 'layout.html' %}
 
-<div class="container">
-    <div class="card">
-        <div class="card-header">Login</div>
+{% block title %}
+    Login
+{% endblock title %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-content-center">
+
+    <div class="card w-50 mt-5">
+        <div class="card-header text-center">Login</div>
         <div class="card-body">
             {% if msg %}
             {% if msg == 'Logout Successful' or 'User succesfuly created' %}
@@ -15,13 +21,13 @@
             <form method="POST" action="/auth">
             <div class="mb-3">
                 <label for="username" class="form-label">UserName</label>
-                <input type="text" class="form-control" id="username" aria-describedby="userhelp">
+                <input type="text" class="form-control" id="username" name="username"  aria-describedby="userhelp">
                 <div id="userhelp" class="form-text">We'll never share your data with anyone else.</div>
             </div>
 
             <div class="mb-3">
                 <label for="InputPassword" class="form-label">Password</label>
-                <input type="password" class="form-control" id="InputPassword">
+                <input type="password" name="password" class="form-control" id="InputPassword">
             </div>
 
             <button type="submit" class="btn btn-primary">Submit</button>
@@ -32,3 +38,4 @@
         </div>
     </div>
 </div>
+{% endblock content %}
