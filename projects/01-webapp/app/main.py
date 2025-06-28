@@ -1,11 +1,10 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from src.task.router import router as task_router
 from src.auth.router import router as auth_router
+from src.pages.router import router as pages_router
 from src.database import Base, azdb
 import uvicorn
 
@@ -13,10 +12,10 @@ import uvicorn
 middleware = [
     Middleware(
         CORSMiddleware,
-        allow_origins = ["*"],
-        allow_credentials = True,
-        allow_methods = ["*"],
-        allow_headers= ["*"]
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"]
     )
 ]
 app = FastAPI(
@@ -26,18 +25,12 @@ app = FastAPI(
     middleware=middleware
 )
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app.include_router(auth_router)
 app.include_router(task_router)
+app.include_router(pages_router)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-@app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="home.html",
-        context= {"r":request}
-        )
 
 Base.metadata.create_all(bind=azdb.engine)
 

@@ -7,21 +7,37 @@
         rel="stylesheet"
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr"
         crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
         crossorigin="anonymous"></script>
     <title>{% block title %}Todo App{% endblock title %}</title>
 </head>
 <body>
-    {% include 'navbar.html'%}
+    <nav class="navbar navbar-expand-lg bg-dark border-2 sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+            <img src="{{url_for('static',path='/img/logo.jpg')}}"
+                alt="Todo APP",
+                width="200px"  >
+            </a>
+        </div>
+        {% if user %}
+        <span class="text-light m-1">
+            Welcome {{user.username}}
+        </span>
+        <a href="/logout" class="btn btn-danger m-1">Logout</a>
+        {% else %}
+        <a href="/auth" class="btn btn-success m-1">Login/Register</a>
+        {% endif %}
+    </nav>
 
-    <div class="container vh-100">
+    <div class="container">
         {% block content %}
         {% endblock %}
     </div>
 
     {% block script %}
-
     {% endblock script %}
 </body>
 </html>

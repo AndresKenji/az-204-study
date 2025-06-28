@@ -1,8 +1,7 @@
-from typing import Annotated, List, Optional
+from typing import Annotated, List
 from datetime import timedelta, datetime
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from src.auth.schemas import Token, User, UserShow, CreateUser
@@ -14,27 +13,16 @@ from src.auth.security import (
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES,
     get_current_active_user,
-    get_current_user_from_cookie,
     check_admin
     )
 from src.auth.dependencies import check_admin_user
 
-class LoginForm:
-    def __init__(self, request: Request):
-        self.request:Request = request
-        self.username: Optional[str]
-        self.password: Optional[str]
-
-    async def create_oauth_form(self):
-        form = await self.request.form()
-        self.username = form.get("username")
-        self.password = form.get("password")
-
 templates = Jinja2Templates(directory="templates")
 
 router = APIRouter(
-    prefix="/auth",
-    lifespan=check_admin_user
+    prefix="/api/auth",
+    lifespan=check_admin_user,
+    tags=["Auth"]
 )
 
 @router.post("/token")
@@ -67,36 +55,10 @@ async def login_for_access_token_cookie(response: Response,form_data: OAuth2Pass
 
     return True
 
-# endpoints para el login por html
-@router.get("/", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="login.html",
-        context={"request":request}
-    )
-
-@router.post("/", response_class=HTMLResponse)
-async def login(request: Request):
-    form = LoginForm(request)
-    await form.create_oauth_form()
-    response = RedirectResponse(url="/tasks", status_code=status.HTTP_302_FOUND)
-
-    validate_user_cookie = await login_for_access_token_cookie(response= response, form_data=form)
-
-    if not validate_user_cookie:
-        msg = "Incorrect Username or Password"
-        return templates.TemplateResponse(
-            name="login.html",
-            request=request,
-            context={"request":request, "msg":msg}
-        )
-    return response
-
-
 @router.get("/users/me/", response_model=UserShow)
 async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
     return current_user
+
 
 @router.get("/users/", response_model=List[UserShow])
 async def read_users_me(db:Session= Depends(azdb.get_db),current_user: db_user = Depends(get_current_active_user)):
@@ -107,6 +69,7 @@ async def read_users_me(db:Session= Depends(azdb.get_db),current_user: db_user =
 @router.get("/users/me/items/")
 async def read_own_items(current_user: Annotated[User, Depends(get_current_active_user)]):
     return [{"item_id": "Foo", "owner": current_user.username}]
+
 
 @router.get("/users/disable/{user_id}", description="Deshabilita o Habilita un usuario")
 async def disable_enable_user(user_id:int, db:Session= Depends(azdb.get_db), current_user: db_user = Depends(get_current_active_user)):
