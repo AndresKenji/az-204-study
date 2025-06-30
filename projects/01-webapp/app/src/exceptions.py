@@ -14,3 +14,7 @@ class UserNotAdminException(Exception):
 class UserNotOwner(Exception):
     def __str__(self):
         return "Error: User is not the resource owner"
+
+class TaskNotFound(Exception):
+    def __str__(self):
+        return "Error: Task not found on database"

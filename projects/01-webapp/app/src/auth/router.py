@@ -17,8 +17,6 @@ from src.auth.security import (
     )
 from src.auth.dependencies import check_admin_user
 
-templates = Jinja2Templates(directory="templates")
-
 router = APIRouter(
     prefix="/api/auth",
     lifespan=check_admin_user,

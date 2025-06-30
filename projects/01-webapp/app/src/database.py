@@ -10,7 +10,8 @@ class Database:
     def __init__(self, db_conn):
         self.engine = create_engine(url=db_conn,
                                     poolclass=NullPool,
-                                    connect_args={"timeout": 15})
+                                    connect_args={"timeout": 15},
+                                    echo=True)
         self.session = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
 
@@ -24,7 +25,7 @@ class Database:
     @property
     def conn(self):
         return self.engine.connect()
-    
+
 Base = declarative_base()
 azdb = Database(DB_CONNECTION)
 
