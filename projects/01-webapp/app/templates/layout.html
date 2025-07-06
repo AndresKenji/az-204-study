@@ -29,7 +29,6 @@
                     <span class="text-light m-1">
                         Welcome {{user.username}}
                     </span>
-                    {{modal('createtaskmodal', 'Crear tarea', '/task/create', "Nombre de la tarea")}}
                     <a href="/logout" class="btn btn-danger m-1">Logout</a>
                 {% else %}
                     <a href="/auth" class="btn btn-success m-1">Login/Register</a>

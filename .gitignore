@@ -84,3 +84,7 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Alembic Migrations
+
+alembic.ini
