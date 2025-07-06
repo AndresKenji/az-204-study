@@ -108,3 +108,11 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
+
+azure_scheme = SingleTenantAzureAuthorizationCodeBearer(
+    app_client_id=os.getenv("APP_CLIENT_ID"),
+    tenant_id=os.getenv("TENANT_ID"),
+    scopes={"user_impersonation": "User impersonation"},
+)

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Request, status, Depends, HTTPException
+from fastapi import APIRouter, Request, status, Depends, Security
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from src.auth import router as auth_routes
@@ -7,6 +7,8 @@ from src.task import task
 from src.auth import security
 from src.pages.schemas import LoginForm
 from src.database import azdb
+from src.auth.security import azure_scheme
+
 
 
 router = APIRouter(
@@ -53,6 +55,12 @@ async def login(request: Request):
                      }
         )
     return response
+
+####################### LOGIN POR AZURE ##############################
+@router.get("/login/azure")
+async def login_azure():
+    # Redirige al usuario al login de Azure AD
+    return RedirectResponse(url="/profile")
 
 @router.get("/logout", response_class=HTMLResponse)
 async def logout(request:Request):
@@ -175,7 +183,12 @@ async def create_task_form(request:Request):
         return response
 
 
+from fastapi import Security
+from fastapi_azure_auth.user import User
 
+@router.get("/profile")
+async def profile(user: User = Security(azure_scheme)):
+    return {"name": user.name, "email": user.email}
 
 
 

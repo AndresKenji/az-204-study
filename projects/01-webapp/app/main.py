@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Security
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -6,7 +6,11 @@ from src.task.router import router as task_router
 from src.auth.router import router as auth_router
 from src.pages.router import router as pages_router
 from src.database import Base, azdb
+from src.auth.security import azure_scheme
 import uvicorn
+import os
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 
 middleware = [
@@ -18,18 +22,39 @@ middleware = [
         allow_headers=["*"]
     )
 ]
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """
+    Load OpenID config on startup.
+    """
+    await azure_scheme.openid_config.load_config()
+    yield
+
 app = FastAPI(
     title="Todo simple app",
     description="A simple todo app using FastAPI and SQLAlchemy",
     version="0.1.0",
-    middleware=middleware
+    middleware=middleware,
+    swagger_ui_oauth2_redirect_url="/oauth2-redirect",
+    swagger_ui_init_oauth={
+        'usePkceWithAuthorizationCodeGrant': True,
+        'clientId': os.getenv("OPENAPI_CLIENT_ID"),
+        'scopes': [f"api://{os.getenv('app_client_id')}/user_impersonation"]
+    }
 )
+
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(auth_router)
 app.include_router(task_router)
 app.include_router(pages_router)
+
+@app.get("/az", dependencies=[Security(azure_scheme)])
+async def azure_test():
+    return {"message":"Hello "}
 
 
 Base.metadata.create_all(bind=azdb.engine)
