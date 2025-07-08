@@ -1,0 +1,22 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Perfil de Usuario
+{% endblock title %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h2>Perfil de Usuario</h2>
+        </div>
+        <div class="card-body">
+            <h4>Bienvenido, {{ user.name }}</h4>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>ID:</strong> {{ user.oid }}</p>
+
+            <a href="/tasks" class="btn btn-primary mt-3">Ver mis tareas</a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -10,6 +10,7 @@ from passlib.context import CryptContext
 from src.auth.models import User as db_user
 from src.auth.schemas import User,TokenData
 from src.database import azdb
+from sqlalchemy.orm import Session
 
 
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -112,7 +113,31 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
 from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
 
 azure_scheme = SingleTenantAzureAuthorizationCodeBearer(
-    app_client_id=os.getenv("APP_CLIENT_ID"),
-    tenant_id=os.getenv("TENANT_ID"),
+    app_client_id=os.getenv("APP_CLIENT_ID", os.getenv("app_client_id")),  # Intenta ambos nombres
+    tenant_id=os.getenv("TENANT_ID", os.getenv("app_directory_id")),  # Intenta ambos nombres
     scopes={"user_impersonation": "User impersonation"},
+    auto_error=False  # Importante: evita el error automático para poder manejar la redirección
 )
+
+async def get_or_create_local_user_from_azure(azure_user: User, db: Session) -> db_user:
+    """Obtiene o crea un usuario local basado en el usuario de Azure AD"""
+
+    # Buscar el usuario por email
+    local_user = db.query(db_user).filter(db_user.email == azure_user.email).first()
+
+    if not local_user:
+        # Si no existe, crear un nuevo usuario
+        local_user = db_user(
+            username=azure_user.email,  # Usar el email como username
+            email=azure_user.email,
+            full_name=azure_user.name,
+            hashed_password=get_password_hash("azure_user"),  # Contraseña aleatoria que no se usará
+            is_admin=False,  # Por defecto no es admin
+            creation_date=datetime.now().date(),
+            disabled=False
+        )
+        db.add(local_user)
+        db.commit()
+        db.refresh(local_user)
+
+    return local_user

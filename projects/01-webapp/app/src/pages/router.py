@@ -5,10 +5,11 @@ from fastapi.templating import Jinja2Templates
 from src.auth import router as auth_routes
 from src.task import task
 from src.auth import security
+from src.auth.models import User
 from src.pages.schemas import LoginForm
 from src.database import azdb
 from src.auth.security import azure_scheme
-
+import os
 
 
 router = APIRouter(
@@ -57,40 +58,99 @@ async def login(request: Request):
     return response
 
 ####################### LOGIN POR AZURE ##############################
+from fastapi.responses import RedirectResponse
+import os
+from urllib.parse import urlencode
+
 @router.get("/login/azure")
 async def login_azure():
-    # Redirige al usuario al login de Azure AD
-    return RedirectResponse(url="/profile")
+    # Define una URI de redirección absoluta completa
+    redirect_uri = "http://localhost:8000/auth/callback"
+
+    params = {
+        "client_id": os.getenv("APP_CLIENT_ID"),  # Cambiado de CLIENT_ID a APP_CLIENT_ID para coincidir con tus variables
+        "response_type": "code",
+        "redirect_uri": redirect_uri,  # URI absoluta
+        "response_mode": "query",
+        "scope": "openid profile email",
+        "state": "/profile"  # Guardar la ruta a la que redirigir después
+    }
+    url = (
+        f"https://login.microsoftonline.com/{os.getenv('TENANT_ID')}/oauth2/v2.0/authorize?"
+        + urlencode(params)
+    )
+    return RedirectResponse(url)
+
+@router.get("/auth/callback", name="azure_callback")
+async def azure_callback(
+    request: Request,
+    code: str = None,
+    state: str = None,
+    error: str = None,
+    error_description: str = None,
+):
+    """Maneja el callback de Azure AD después de la autenticación."""
+    if error:
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": True, "msg": error_description}
+        )
+
+    try:
+        # Intercambia el código de autorización por un token
+        token = await azure_scheme.get_access_token(
+            code=code,
+            redirect_uri=str(request.url_for("azure_callback"))
+        )
+
+        # Obtén información del usuario del token
+        user_info = await azure_scheme.get_user_info(token)
+
+        # Establece una cookie con el token de acceso
+        response = RedirectResponse(url=state or "/profile")
+        response.set_cookie(
+            key="azure_token",
+            value=token.access_token,
+            httponly=True,
+            max_age=3600,
+            secure=False  # Cambiar a True en producción
+        )
+
+        return response
+    except Exception as e:
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": True, "msg": str(e)}
+        )
 
 @router.get("/logout", response_class=HTMLResponse)
-async def logout(request:Request):
-    response = templates.TemplateResponse(
-        request=request,
-        name="login.html",
-        context={
-            "msg":"Logout Successful"
-        }
-    )
+async def logout(request: Request):
+    response = RedirectResponse(url="/auth")
+    # Eliminar cookies locales
     response.delete_cookie("access_token")
-    return response
+
+    # Para logout completo de Azure AD, deberías redirigir a la URL de logout de Azure
+    # Esto depende de tu configuración de Azure AD
+    azure_logout_url = f"https://login.microsoftonline.com/{os.getenv('TENANT_ID')}/oauth2/v2.0/logout"
+    return RedirectResponse(url=azure_logout_url)
 
 
 # endpoints de tareas
 @router.get("/tasks", response_class=HTMLResponse)
-async def tasks_page(request:Request, db:Session = Depends(azdb.get_db)):
+async def tasks_page(request: Request, user: User = Security(azure_scheme), db: Session = Depends(azdb.get_db)):
     try:
-        user = await security.get_current_user_from_cookie(request)
-        if user is None:
-            RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
+        # Como ya tenemos el usuario de Azure, podemos usarlo directamente
+        # Aquí necesitarías adaptar para obtener o crear un usuario local asociado a este usuario de Azure
+        local_user = await security.get_or_create_local_user_from_azure(user, db)
 
-        tasks = await task.get_task(db=db, current_user=user)
+        tasks = await task.get_task(db=db, current_user=local_user)
 
         return templates.TemplateResponse(
             name="tasks.html",
             request=request,
             context={
-                "request":request,
-                "user":user,
+                "request": request,
+                "user": user,  # Usuario de Azure
                 "tasks": [t for t in tasks if not t.done],
                 "completed_tasks": [t for t in tasks if t.done]
             }
@@ -101,11 +161,10 @@ async def tasks_page(request:Request, db:Session = Depends(azdb.get_db)):
             request=request,
             name="login.html",
             context={
-                "msg":e,
-                "error":True
-                }
-            )
-        response.delete_cookie("access_token")
+                "msg": str(e),
+                "error": True
+            }
+        )
         return response
 
 @router.post("/tasks/done/{id}", response_class=HTMLResponse)
@@ -186,9 +245,35 @@ async def create_task_form(request:Request):
 from fastapi import Security
 from fastapi_azure_auth.user import User
 
-@router.get("/profile")
-async def profile(user: User = Security(azure_scheme)):
-    return {"name": user.name, "email": user.email}
+@router.get("/profile", response_class=HTMLResponse)
+async def profile(request: Request, db: Session = Depends(azdb.get_db)):
+    """Muestra la página de perfil del usuario autenticado."""
+    try:
+        # Obtener el token de la cookie
+        token = request.cookies.get("azure_token")
+        if not token:
+            return RedirectResponse(url="/login/azure")
+
+        # Validar el token
+        user_info = await azure_scheme.validate_token(token)
+        if not user_info:
+            return RedirectResponse(url="/login/azure")
+
+        # Aquí puedes obtener o crear un usuario local si es necesario
+        local_user = await security.get_or_create_local_user_from_azure(user_info, db)
+
+        return templates.TemplateResponse(
+            "profile.html",
+            {
+                "request": request,
+                "user": user_info,
+                "local_user": local_user
+            }
+        )
+    except Exception as e:
+        response = RedirectResponse(url="/auth")
+        response.delete_cookie("azure_token")
+        return response
 
 
 

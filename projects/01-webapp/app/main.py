@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Security
+from fastapi import FastAPI, Security, Request, Response
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -36,6 +36,7 @@ app = FastAPI(
     description="A simple todo app using FastAPI and SQLAlchemy",
     version="0.1.0",
     middleware=middleware,
+    lifespan=lifespan,  # Asegurar que se usa el lifespan para cargar OpenID config
     swagger_ui_oauth2_redirect_url="/oauth2-redirect",
     swagger_ui_init_oauth={
         'usePkceWithAuthorizationCodeGrant': True,
@@ -44,6 +45,38 @@ app = FastAPI(
     }
 )
 
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.responses import RedirectResponse
+
+class AzureAuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Rutas excluidas de la autenticación
+        excluded_paths = ["/auth", "/login/azure", "/static", "/docs", "/openapi.json", "/redoc"]
+
+        # Verificar si la ruta actual está excluida
+        path = request.url.path
+        if any(path.startswith(excluded) for excluded in excluded_paths):
+            # Permitir acceso sin autenticación para rutas excluidas
+            return await call_next(request)
+
+        try:
+            # Intentar verificar token de Azure
+            # Esto es simplificado, puedes necesitar ajustarlo según tu implementación
+            token = request.cookies.get("azure_token")
+            if not token:
+                # Si no hay token, redirigir a login
+                return RedirectResponse(url="/login/azure", status_code=302)
+
+            # Continuar con la solicitud si el token es válido
+            response = await call_next(request)
+            return response
+
+        except Exception:
+            # En caso de error, redirigir a login
+            return RedirectResponse(url="/auth", status_code=302)
+
+# Agregar el middleware a la aplicación
+app.add_middleware(AzureAuthMiddleware)
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
