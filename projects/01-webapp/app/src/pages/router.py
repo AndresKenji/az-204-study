@@ -255,24 +255,27 @@ async def auth_callback(request: Request, code: str = None, state: str = None, e
                 )
 
             # Crear o recuperar el usuario en la base de datos
-            with db:
-                # Verificar si el usuario existe por email
-                user_db = db.query(security.db_user).filter(security.db_user.email == user_info.get("mail") or user_info.get("userPrincipalName")).first()
+            # Verificar si el usuario existe por email
+            from sqlalchemy import or_
+            user_db = db.query(security.db_user).filter(or_(
+                security.db_user.email == user_info.get("mail"), 
+                security.db_user.email == user_info.get("userPrincipalName")
+            )).first()
 
-                if not user_db:
-                    # Crear nuevo usuario
-                    user_db = security.db_user()
-                    user_db.username = user_info.get("userPrincipalName", "").split('@')[0] or user_info.get("displayName", "").replace(" ", "").lower()
-                    user_db.email = user_info.get("mail") or user_info.get("userPrincipalName")
-                    user_db.full_name = user_info.get("displayName")
-                    user_db.hashed_password = security.get_password_hash(f"azure_{user_info.get('id')}")
-                    user_db.disabled = False
-                    user_db.is_admin = False
-                    user_db.creation_date = datetime.now().date()
+            if not user_db:
+                # Crear nuevo usuario
+                user_db = security.db_user()
+                user_db.username = user_info.get("userPrincipalName", "").split('@')[0] or user_info.get("displayName", "").replace(" ", "").lower()
+                user_db.email = user_info.get("mail") or user_info.get("userPrincipalName")
+                user_db.full_name = user_info.get("displayName")
+                user_db.hashed_password = security.get_password_hash(f"azure_{user_info.get('id')}")
+                user_db.disabled = False
+                user_db.is_admin = False
+                user_db.creation_date = datetime.now().date()
 
-                    db.add(user_db)
-                    db.commit()
-                    db.refresh(user_db)
+                db.add(user_db)
+                db.commit()
+                db.refresh(user_db)
 
             # Crear token JWT para la sesión
             access_token_expires = timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES)
