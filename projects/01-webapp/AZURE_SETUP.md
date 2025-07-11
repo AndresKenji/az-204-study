@@ -36,7 +36,18 @@ Después de crear el registro:
      - Microsoft Graph > Delegated permissions > `profile`
      - Microsoft Graph > Delegated permissions > `email`
 
-4. **Exponer una API** (opcional, para scopes personalizados):
+4. **Crear un secreto de cliente (Client Secret)**:
+   - Ve a "Certificates & secrets" en el menú lateral
+   - Selecciona la pestaña "Client secrets"
+   - Haz clic en "New client secret" (Nuevo secreto de cliente)
+   - Proporciona una descripción, por ejemplo "Secret para TodoApp"
+   - Selecciona un periodo de expiración (recomendado: 6 meses o 1 año)
+   - Haz clic en "Add" (Agregar)
+   - **IMPORTANTE**: Copia inmediatamente el valor del secreto generado (Value)
+   - Este valor solo se muestra una vez y no podrás recuperarlo después
+   - Guárdalo como `AZURE_CLIENT_SECRET` en tu archivo `.env`
+
+5. **Exponer una API** (opcional, para scopes personalizados):
    - Ve a "Expose an API"
    - Agrega un scope: `api://{client-id}/user_impersonation`
 
@@ -48,6 +59,7 @@ Actualiza tu archivo `.env` con los valores obtenidos:
 # Azure Entra ID configuration
 AZURE_CLIENT_ID=tu_client_id_aqui
 AZURE_TENANT_ID=tu_tenant_id_aqui
+AZURE_CLIENT_SECRET=tu_client_secret_aqui
 OPENAPI_CLIENT_ID=tu_client_id_aqui
 ```
 
@@ -66,6 +78,18 @@ OPENAPI_CLIENT_ID=tu_client_id_aqui
 - Los usuarios se crearán automáticamente en tu base de datos local al hacer login por primera vez
 - Los usuarios de Azure no tendrán permisos de administrador por defecto
 
+## Consideraciones de seguridad
+
+- **Secretos de cliente**: Los secretos son credenciales sensibles que permiten a tu aplicación autenticarse.
+  - Nunca almacenes secretos en control de versiones (Git)
+  - Rota los secretos periódicamente (crea nuevos y elimina los viejos)
+  - En producción, considera usar Azure Key Vault para almacenar secretos
+  - Los secretos tienen fecha de expiración, planifica su renovación
+
+- **Permisos**: Sigue el principio de mínimo privilegio
+  - Solicita solo los permisos que necesites
+  - Considera la separación de preocupaciones (principio de responsabilidad única)
+
 ## Troubleshooting
 
 ### Error: "AADSTS50011: The reply URL specified in the request does not match"
@@ -78,3 +102,9 @@ OPENAPI_CLIENT_ID=tu_client_id_aqui
 ### Error: "Invalid tenant"
 - Verifica que el `AZURE_TENANT_ID` sea correcto
 - Asegúrate de estar usando el tenant correcto
+
+### Error: "AADSTS7000218: The request body must contain the following parameter: 'client_assertion' or 'client_secret'"
+- Este error indica que falta el secreto de cliente en la solicitud
+- Asegúrate de haber creado un secreto de cliente en Azure Portal
+- Verifica que el valor de `AZURE_CLIENT_SECRET` en tu archivo `.env` sea correcto
+- Comprueba que estés incluyendo `client_secret` en los parámetros de la solicitud de token

@@ -220,6 +220,7 @@ async def auth_callback(request: Request, code: str = None, state: str = None, e
 
         client_id = os.getenv("AZURE_CLIENT_ID")
         tenant_id = os.getenv("AZURE_TENANT_ID")
+        client_secret = os.getenv("AZURE_CLIENT_SECRET")
         redirect_uri = os.getenv("AZURE_REDIRECT_URI", "http://localhost:8000/auth/callback")
 
         # URL para intercambiar el código por un token
@@ -229,6 +230,7 @@ async def auth_callback(request: Request, code: str = None, state: str = None, e
         token_data = {
             "grant_type": "authorization_code",
             "client_id": client_id,
+            "client_secret": client_secret,  # Añadimos el client_secret
             "scope": "openid profile email User.Read",
             "code": code,
             "redirect_uri": redirect_uri
