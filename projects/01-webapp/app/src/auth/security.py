@@ -146,3 +146,22 @@ async def logout(request: Request):
     if response:
         return response.delete_cookie("access_token")
 
+
+
+class LoginRedirectException(HTTPException):
+    """Custom exception for login redirects"""
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            detail="Login required"
+        )
+
+async def require_login(request: Request) -> User:
+    """
+    Dependency that requires user to be logged in.
+    Raises LoginRedirectException if not authenticated.
+    """
+    user = await get_current_user_from_cookie(request)
+    if user is None:
+        raise LoginRedirectException()
+    return user

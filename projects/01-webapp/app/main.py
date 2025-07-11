@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Security
+from fastapi import FastAPI, Request, status
+from fastapi.responses import RedirectResponse
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -6,7 +7,7 @@ from src.task.router import router as task_router
 from src.auth.router import router as auth_router
 from src.pages.router import router as pages_router
 from src.database import Base, azdb
-from src.auth.security import azure_scheme
+from src.auth.security import azure_scheme, LoginRedirectException
 import uvicorn
 import os
 from contextlib import asynccontextmanager
@@ -57,9 +58,10 @@ app.include_router(auth_router)
 app.include_router(task_router)
 app.include_router(pages_router)
 
-@app.get("/az", dependencies=[Security(azure_scheme)])
-async def azure_test():
-    return {"message":"Hello "}
+@app.exception_handler(LoginRedirectException)
+async def login_redirect_exception_handler(request: Request, exc: LoginRedirectException):
+    return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
+
 
 
 Base.metadata.create_all(bind=azdb.engine)

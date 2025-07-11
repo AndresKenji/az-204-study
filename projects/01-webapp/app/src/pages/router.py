@@ -1,10 +1,11 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from fastapi import APIRouter, Request, status, Depends, Security
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from src.auth import router as auth_routes
-from src.task import task
 from src.auth import security
+from src.task import task
 from src.pages.schemas import LoginForm
 from src.database import azdb
 from datetime import timedelta, datetime
@@ -60,12 +61,11 @@ async def login(request: Request):
 
 # endpoints de tareas
 @router.get("/tasks", response_class=HTMLResponse)
-async def tasks_page(request:Request, db:Session = Depends(azdb.get_db)):
+async def tasks_page(request:Request,
+                     db:Session = Depends(azdb.get_db),
+                     user = Depends(security.require_login)
+                     ):
     try:
-        user = await security.get_current_user_from_cookie(request)
-        if user is None:
-            RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
-
         tasks = await task.get_task(db=db, current_user=user)
 
         return templates.TemplateResponse(
@@ -92,11 +92,12 @@ async def tasks_page(request:Request, db:Session = Depends(azdb.get_db)):
         return response
 
 @router.post("/tasks/done/{id}", response_class=HTMLResponse)
-async def complete_task(request:Request, id: int, db:Session = Depends(azdb.get_db)):
+async def complete_task(request:Request,
+                        id: int,
+                        db:Session = Depends(azdb.get_db),
+                     user = Depends(security.require_login)
+                     ):
     try:
-        user = await security.get_current_user_from_cookie(request)
-        if user is None:
-            return RedirectResponse(url="/auth", status_code=status.HTTP_301_MOVED_PERMANENTLY)
 
         done = await task.complete_task(id, db, user)
 
@@ -117,12 +118,9 @@ async def complete_task(request:Request, id: int, db:Session = Depends(azdb.get_
 
 
 @router.post("/tasks/delete/{id}", response_class=HTMLResponse)
-async def delete_task(request:Request, id:int, db:Session = Depends(azdb.get_db)):
+async def delete_task(request:Request, id:int, db:Session = Depends(azdb.get_db),
+                     user = Depends(security.require_login)):
     try:
-        user = await security.get_current_user_from_cookie(request)
-        if user is None:
-            return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
-
         if await task.delete_task(id, db, user):
             print("Tarea borrada")
             return RedirectResponse(url="/tasks", status_code=status.HTTP_302_FOUND)
@@ -139,11 +137,9 @@ async def delete_task(request:Request, id:int, db:Session = Depends(azdb.get_db)
         return response
 
 @router.get("/tasks/create", response_class=HTMLResponse)
-async def create_task_form(request:Request):
+async def create_task_form(request:Request,
+                     user = Depends(security.require_login)):
     try:
-        user = await security.get_current_user_from_cookie(request)
-        if user is None:
-            return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
 
         return templates.TemplateResponse(
             request=request,
@@ -256,9 +252,9 @@ async def auth_callback(request: Request, code: str = None, state: str = None, e
 
             # Crear o recuperar el usuario en la base de datos
             # Verificar si el usuario existe por email
-            from sqlalchemy import or_
+
             user_db = db.query(security.db_user).filter(or_(
-                security.db_user.email == user_info.get("mail"), 
+                security.db_user.email == user_info.get("mail"),
                 security.db_user.email == user_info.get("userPrincipalName")
             )).first()
 
