@@ -1,7 +1,7 @@
 from typing import Annotated, List
 from datetime import timedelta, datetime
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from src.auth.schemas import Token, User, UserShow, CreateUser
@@ -13,9 +13,12 @@ from src.auth.security import (
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES,
     get_current_active_user,
-    check_admin
+    check_admin,
+    get_current_azure_user,
+    azure_scheme
     )
 from src.auth.dependencies import check_admin_user
+from fastapi_azure_auth.user import User as AzureUser
 
 router = APIRouter(
     prefix="/api/auth",
@@ -104,3 +107,26 @@ async def create_user(userdata: CreateUser, db: Session = Depends(azdb.get_db)):
     db.refresh(new_user)
 
     return new_user
+
+# Ruta para autenticación con Azure Entra ID
+@router.get("/azure-login")
+async def azure_login():
+    """
+    Endpoint para iniciar el flujo de autenticación con Azure Entra ID.
+    Redirecciona al usuario a la página de inicio de sesión de Microsoft.
+    """
+    login_url = azure_scheme.get_login_url()
+    return {"login_url": login_url}
+
+@router.get("/azure-user")
+async def read_azure_user(azure_user: AzureUser = Depends(get_current_azure_user)):
+    """
+    Endpoint para obtener la información del usuario autenticado con Azure.
+    """
+    return {
+        "name": azure_user.name,
+        "email": azure_user.preferred_username,
+        "sub": azure_user.sub,
+        "oid": azure_user.oid,
+        "roles": azure_user.roles if hasattr(azure_user, "roles") else []
+    }

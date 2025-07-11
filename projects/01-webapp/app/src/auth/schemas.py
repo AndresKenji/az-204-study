@@ -1,6 +1,6 @@
 from datetime import date
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class Token(BaseModel):
     access_token: str
@@ -22,6 +22,14 @@ class User(BaseModel):
 
     class Config:
         from_attributes = True
+
+class AzureUser(BaseModel):
+    """Schema para usuarios de Azure"""
+    name: str
+    preferred_username: str
+    oid: str
+    sub: str
+    roles: List[str] = []
 
 class CreateUser(BaseModel):
     username: str

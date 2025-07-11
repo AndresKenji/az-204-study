@@ -7,6 +7,9 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Depends, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
+from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
+from fastapi_azure_auth.exceptions import InvalidAuth
+from fastapi_azure_auth.user import User as AzureUser
 from src.auth.models import User as db_user
 from src.auth.schemas import User,TokenData
 from src.database import azdb
@@ -109,10 +112,37 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-from fastapi_azure_auth import SingleTenantAzureAuthorizationCodeBearer
 
+# Configuración de Azure Entra ID
 azure_scheme = SingleTenantAzureAuthorizationCodeBearer(
-    app_client_id=os.getenv("APP_CLIENT_ID"),
-    tenant_id=os.getenv("TENANT_ID"),
-    scopes={"user_impersonation": "User impersonation"},
+    app_client_id=os.getenv("AZURE_CLIENT_ID", ""),
+    tenant_id=os.getenv("AZURE_TENANT_ID", ""),
+    scopes={
+        f"api://{os.getenv('AZURE_CLIENT_ID', '')}/user_impersonation": "User impersonation"
+    }
 )
+
+async def get_current_azure_user(
+    azure_user: AzureUser = Depends(azure_scheme),
+) -> AzureUser:
+    """
+    Get the current Azure user from the token.
+    Only used for API routes protected with Azure authentication.
+    """
+    try:
+        return azure_user
+    except InvalidAuth as error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid authentication: {error}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+async def logout(request: Request):
+    """
+    Logout user by deleting the cookie
+    """
+    response = request.headers.get("cookie")
+    if response:
+        return response.delete_cookie("access_token")
+

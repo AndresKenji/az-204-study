@@ -11,6 +11,10 @@ import uvicorn
 import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 
 middleware = [
@@ -36,11 +40,12 @@ app = FastAPI(
     description="A simple todo app using FastAPI and SQLAlchemy",
     version="0.1.0",
     middleware=middleware,
+    lifespan=lifespan,
     swagger_ui_oauth2_redirect_url="/oauth2-redirect",
     swagger_ui_init_oauth={
         'usePkceWithAuthorizationCodeGrant': True,
         'clientId': os.getenv("OPENAPI_CLIENT_ID"),
-        'scopes': [f"api://{os.getenv('app_client_id')}/user_impersonation"]
+        'scopes': [f"api://{os.getenv('AZURE_CLIENT_ID')}/user_impersonation"]
     }
 )
 

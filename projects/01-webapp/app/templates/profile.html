@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block title %}Perfil de Usuario - Todo App{% endblock title %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>Perfil de Usuario</h4>
+            </div>
+            <div class="card-body">
+                {% if user %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Información Personal</h5>
+                            <p><strong>Nombre:</strong> {{ user.full_name or 'No especificado' }}</p>
+                            <p><strong>Usuario:</strong> {{ user.username }}</p>
+                            <p><strong>Email:</strong> {{ user.email }}</p>
+                            <p><strong>Fecha de registro:</strong> {{ user.creation_date }}</p>
+                            <p><strong>Estado:</strong>
+                                {% if user.disabled %}
+                                    <span class="badge bg-danger">Deshabilitado</span>
+                                {% else %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Rol:</strong>
+                                {% if user.is_admin %}
+                                    <span class="badge bg-primary">Administrador</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Usuario</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Información de Autenticación</h5>
+                            {% if user.azure_user %}
+                                <p><strong>Proveedor:</strong> Microsoft Entra ID</p>
+                                <p><strong>ID de Azure:</strong> {{ user.azure_user.oid }}</p>
+                                <p><strong>Tenant:</strong> {{ user.azure_user.tid if user.azure_user.tid else 'N/A' }}</p>
+                            {% else %}
+                                <p><strong>Proveedor:</strong> Autenticación Local</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <a href="/tasks" class="btn btn-primary">Ir a Tareas</a>
+                            <a href="/logout" class="btn btn-danger">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <h4>No hay información de usuario disponible</h4>
+                        <p>Por favor, inicia sesión para ver tu perfil.</p>
+                        <a href="/auth" class="btn btn-primary">Iniciar Sesión</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
