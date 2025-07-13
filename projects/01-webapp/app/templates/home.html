@@ -5,5 +5,22 @@
 {% endblock titulo %}
 
 {% block content %}
-<h1>Home page</h1>
+<p>Welcome to the home page!</p>
+
+{% if user %}
+    <p>Hello, {{ user.full_name.split()[0] }}!</p>
+    <!-- botones para dirigir al usuaria a su lista de tareas  -->
+    <div class="d-flex justify-content-center mt-4">
+        <a href="/tasks" class="btn btn-info m-1">Ver Tareas</a>
+        <button type="button"
+                class="btn btn-primary m-1"
+                data-bs-toggle="modal"
+                data-bs-target="#createtaskmodal"
+                data-bs-whatever="@mdo">
+                Crear Tarea
+        </button>
+    </div>
+{% else %}
+    <p>Please <a href="/auth">log in</a> to access more features.</p>
+{% endif %}
 {% endblock %}

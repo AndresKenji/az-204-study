@@ -18,11 +18,19 @@
             </div>
             <div class="modal-body">
                 <form action="/tasks/create" method="post">
+                <div class="mb-3">
+                    <label for="taskTitle" class="form-label">Título de la tarea</label>
+                    <input type="text" class="form-control" id="taskTitle" name="title" required>
+                </div>
+                <div class="mb-3">
+                    <label for="taskDescription" class="form-label">Descripción de la tarea</label>
+                    <textarea class="form-control" id="taskDescription" name="description" rows="3"></textarea>
+                </div>
 
             </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Guardar cambios</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
                 </div>
                 </form>
         </div>

@@ -23,6 +23,10 @@ router = APIRouter(
 
 templates = Jinja2Templates(directory="templates")
 
+# Importar los archivos de rutas para que se registren automáticamente
+from src.pages.routes import auth
+from src.pages.routes import tasks
+
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     user = get_current_user_from_request(request)

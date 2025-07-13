@@ -10,19 +10,12 @@
     <div class="card w-50 mt-5">
         <div class="card-header text-center">Login</div>
         <div class="card-body">
-            {% if msg %}
-            {% if error %}
-            <div class="alert alert-danger" role="alert">{{msg}}</div>
-            {% else %}
-            <div class="alert alert-success" role="alert">{{msg}}</div>
-            {% endif %}
-            {% endif %}
+
 
             <form method="POST" action="/auth">
             <div class="mb-3">
                 <label for="username" class="form-label">UserName</label>
                 <input type="text" class="form-control" id="username" name="username"  aria-describedby="userhelp">
-                <div id="userhelp" class="form-text">We'll never share your data with anyone else.</div>
             </div>
 
             <div class="mb-3">
@@ -36,7 +29,10 @@
         <div class="card-footer text-muted">
             <a href="register">Register?</a>
             <div class="text-center mt-3">
-                <a href="/login/azure" class="btn btn-outline-primary">Iniciar sesión con Azure AD</a>
+                <a href="/login-azure" class="btn btn-primary m-1">
+                    <img src="https://learn.microsoft.com/es-es/azure/active-directory/develop/media/howto-add-branding-in-azure-ad-apps/ms-symbollockup_mssymbol_19.png" alt="MS Logo" style="height: 20px; margin-right: 5px;">
+                    Login with Microsoft
+                </a>
             </div>
         </div>
     </div>
