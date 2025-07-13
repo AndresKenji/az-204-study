@@ -14,6 +14,6 @@ class User(Base):
     is_admin = Column(Boolean, nullable=False, default=False)
     creation_date = Column(Date, nullable=False)
     disable_date = Column(Date, nullable=True)
-    
+
     tasks = relationship("Task", back_populates="user")
 

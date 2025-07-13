@@ -8,13 +8,14 @@ from src.auth.router import router as auth_router
 from src.pages.router import router as pages_router
 from src.database import Base, azdb
 from src.auth.security import azure_scheme, LoginRedirectException
+from src.auth.middlewares import UserMiddleware
 import uvicorn
 import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from dotenv import load_dotenv
 
-# Cargar variables de entorno desde .env
+
 load_dotenv()
 
 
@@ -50,7 +51,7 @@ app = FastAPI(
     }
 )
 
-
+app.add_middleware(UserMiddleware)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

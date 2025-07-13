@@ -1,0 +1,133 @@
+/* Variables de colores */
+:root {
+    --color-primary: #6C63FF;
+    --color-secondary: #FF6584;
+    --color-background: #F8F9FA;
+    --color-success: #28A745;
+    --color-warning: #FFC107;
+    --color-error: #DC3545;
+    --color-text: #343A40;
+}
+
+/* Estilo general */
+body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Botones */
+button {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: var(--color-secondary);
+}
+
+button.success {
+    background-color: var(--color-success);
+}
+
+button.warning {
+    background-color: var(--color-warning);
+}
+
+button.error {
+    background-color: var(--color-error);
+}
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 18px;
+    text-align: left;
+}
+
+table th, table td {
+    padding: 12px;
+    border: 1px solid var(--color-text);
+}
+
+table th {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+table tr:nth-child(even) {
+    background-color: var(--color-background);
+}
+
+/* Modales - Compatible con Bootstrap */
+.modal-header {
+    background-color: var(--color-primary) !important;
+    color: white !important;
+    border-bottom: 1px solid var(--color-text) !important;
+}
+
+.modal-title {
+    color: white !important;
+}
+
+.btn-close {
+    filter: invert(1) !important; /* Hace el botón de cerrar blanco */
+}
+
+.modal-content {
+    border-radius: 10px !important;
+    border: 1px solid var(--color-text) !important;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--color-text) !important;
+}
+
+/* Asegurar que el backdrop funcione correctamente */
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+/* Listas */
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-text);
+    border-radius: 5px;
+    margin-bottom: 10px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+li:hover {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.list-group-item {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* Navbar - Compatible con Bootstrap */
+.navbar {
+    z-index: 1030 !important; /* Mantiene el navbar debajo del modal */
+}

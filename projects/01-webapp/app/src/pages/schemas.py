@@ -11,3 +11,4 @@ class LoginForm:
         form = await self.request.form()
         self.username = form.get("username")
         self.password = form.get("password")
+

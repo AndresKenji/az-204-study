@@ -27,7 +27,10 @@ async def complete_task(id:int, db:Session, current_user: User) -> bool:
         raise exceptions.UserNotOwner()
 
 async def create_task(task: TaskCreate, db: Session, current_user: User) -> Task:
-    new_task = Task(title= task.title, done = task.done, user_id = current_user.id)
+    new_task = Task(title= task.title,
+                    description= task.description,
+                    done = task.done,
+                    user_id = current_user.id)
     db.add(new_task)
     db.commit()
     db.refresh(new_task)

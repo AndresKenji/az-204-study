@@ -14,7 +14,7 @@ class Database:
         self.engine = create_engine(url=db_conn,
                                     poolclass=NullPool,
                                     connect_args={"timeout": 15},
-                                    echo=True)
+                                    echo=False)
         self.session = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
 
