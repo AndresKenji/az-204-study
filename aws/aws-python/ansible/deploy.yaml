@@ -7,3 +7,23 @@
       apt:
         update_cache: yes
         cache_valid_time: 3600
+
+    - name: Instalar Paquetes Necesarios
+      apt:
+        name:
+          - nginx
+          - python3
+          - python3-pip
+          - python3-venv
+          - git
+        state: present
+
+    - name: Clonar el repositorio de la aplicación
+      git:
+        repo: 'https://github.com/AndresKenji/python-deployment-project.git'
+        dest: '{{ app_directory }}'
+        version: develop
+        key_file: '{{ ansible_git_deployment_key }}'
+        
+
+
