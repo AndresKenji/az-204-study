@@ -72,22 +72,58 @@ def client(test_db, db_session):
     """
     Create a test client with dependency override for the database.
     """
+    from src.database import azdb
+    import src.auth.router as auth_router
+    import src.auth.security as auth_security
+    import src.auth.dependencies as auth_dependencies
+    import src.task.router as task_router
+    import src.pages.routes.tasks as page_tasks
+    import src.pages.routes.auth as page_auth
+    import src.pages.router as pages_router
+    
     def override_get_db():
         try:
             yield db_session
         finally:
             pass
-
+    
+    # Store original azdb references
+    originals = {
+        'auth_router': auth_router.azdb,
+        'auth_security': auth_security.azdb,
+        'auth_dependencies': auth_dependencies.azdb,
+        'task_router': task_router.azdb,
+        'page_tasks': page_tasks.azdb,
+        'page_auth': page_auth.azdb,
+        'pages_router': pages_router.azdb,
+    }
+    
+    # Override azdb in all modules
+    auth_router.azdb = test_db
+    auth_security.azdb = test_db
+    auth_dependencies.azdb = test_db
+    task_router.azdb = test_db
+    page_tasks.azdb = test_db
+    page_auth.azdb = test_db
+    pages_router.azdb = test_db
+    
     # Override the database dependency
-    app.dependency_overrides[test_db.get_db] = override_get_db
-
+    app.dependency_overrides[azdb.get_db] = override_get_db
+    
     with TestClient(app) as test_client:
         yield test_client
-
+    
+    # Restore original azdb references
+    auth_router.azdb = originals['auth_router']
+    auth_security.azdb = originals['auth_security']
+    auth_dependencies.azdb = originals['auth_dependencies']
+    task_router.azdb = originals['task_router']
+    page_tasks.azdb = originals['page_tasks']
+    page_auth.azdb = originals['page_auth']
+    pages_router.azdb = originals['pages_router']
+    
     # Clean up dependency overrides
     app.dependency_overrides.clear()
-
-
 @pytest.fixture(scope="function")
 def test_user(db_session):
     """
