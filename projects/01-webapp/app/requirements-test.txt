@@ -1,0 +1,11 @@
+# Testing dependencies for the FastAPI Todo App
+# Install with: pip install -r requirements-test.txt
+
+pytest==8.3.3                 # Testing framework
+pytest-asyncio==0.24.0        # Async test support
+pytest-cov==6.0.0             # Coverage reporting
+httpx==0.28.1                 # HTTP client for testing FastAPI
+factory-boy==3.3.1            # Test data factories
+faker==30.8.2                 # Generate fake data for tests
+pytest-xdist==3.6.0           # Run tests in parallel
+pytest-mock==3.14.0           # Mocking utilities
